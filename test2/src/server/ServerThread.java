@@ -14,6 +14,8 @@ class ServerThread extends Thread {
     private BufferedReader in;
     private PrintWriter out;
     private Gson gson = new Gson();
+    private List<Deposit> list;
+
 
     public ServerThread(Socket s) throws IOException {
         socket = s;
@@ -33,43 +35,15 @@ class ServerThread extends Thread {
                 switch (str) {
 
                     case "list":
-                        List<Deposit> list = readFile();
-                        for (Deposit aList1 : list) {
-                            out.println(aList1.toString());
-                        }
-                        out.println("0");
+                        list();
                         break;
 
                     case "add":
-                        String json = in.readLine();
-                        Deposit dep = gson.fromJson(json, Deposit.class);
-                        if (dep.getAmoundOnDeposit()<=0 || dep.getProfitability()<=0 || dep.getTimeContraints()<=0) {
-                            out.println("Error. Invalid input");
-                            break;
-                        }
-                        list = readFile();
-                        boolean flag=true;
-                        for (Deposit aList : list) {
-                            if (Objects.equals(aList.getAccountID(), dep.getAccountID())) {
-                                out.println("Error. This ID is already in use");
-                                flag=false;
-                                break;
-                            }
-                        }
-                        if (flag) {
-                            list.add(dep);
-                            writeFile(list);
-                            out.println("OK");
-                        }
+                        add();
                         break;
 
                     case "sum":
-                        list = readFile();
-                        double sum=0;
-                        for (Deposit aList : list) {
-                            sum += aList.getAmoundOnDeposit();
-                        }
-                        out.println(sum);
+                        sum();
                         break;
 
                     case "count":
@@ -78,85 +52,23 @@ class ServerThread extends Thread {
                         break;
 
                     case "info account":
-                        String accountId = in.readLine();
-                        list=readFile();
-                        flag = true;
-                        for (Deposit aList1 : list) {
-                            if (Objects.equals(aList1.getAccountID(), accountId)) {
-                                out.println(aList1.toString());
-                                flag = false;
-                                break;
-                            }
-                        }
-                        if (flag) {
-                            out.println("No deposits with entered account id");
-                        }
+                        infoAccount();
                         break;
 
                     case "delete":
-                        accountId = in.readLine();
-                        list=readFile();
-                        flag = true;
-                        for (int i = 0; i < list.size(); i++) {
-                            if (Objects.equals(list.get(i).getAccountID(), accountId)) {
-                                list.remove(list.get(i));
-                                writeFile(list);
-                                out.println("Deleted");
-                                flag = false;
-                                break;
-                            }
-                        }
-                        if (flag) {
-                            out.println("No deposits with entered account id");
-                        }
+                        delete();
                         break;
 
                     case "info depositor":
-                        String depositor = in.readLine();
-                        list=readFile();
-                        flag = true;
-                        for (Deposit aList : list) {
-                            if (Objects.equals(aList.getDepositor(), depositor)) {
-                                out.println(aList.toString());
-                                flag = false;
-                            }
-                        }
-                        out.println("0");
-                        if (flag) {
-                            out.println("No deposits with entered depositor");
-                        }
+                        infoDepositor();
                         break;
 
                     case "show type":
-                        String type = in.readLine();
-                        list=readFile();
-                        flag = true;
-                        for (Deposit aList : list) {
-                            if (Objects.equals(aList.getType(), type)) {
-                                out.println(aList.toString());
-                                flag = false;
-                            }
-                        }
-                        out.println("0");
-                        if (flag) {
-                            out.println("No deposits with entered type");
-                        }
+                        showType();
                         break;
 
                     case "show bank":
-                        String name = in.readLine();
-                        list=readFile();
-                        flag = true;
-                        for (Deposit aList : list) {
-                            if (Objects.equals(aList.getName(), name)) {
-                                out.println(aList.toString());
-                                flag = false;
-                            }
-                        }
-                        out.println("0");
-                        if (flag) {
-                            out.println("No deposits with entered name");
-                        }
+                        showBank();
                         break;
                 }
             }
@@ -171,6 +83,128 @@ class ServerThread extends Thread {
                 System.err.println("Socket not closed");
             }
         }
+    }
+
+    private void showBank() throws IOException {
+        String name = in.readLine();
+        list=readFile();
+        boolean flag = true;
+        for (Deposit aList : list) {
+            if (Objects.equals(aList.getName(), name)) {
+                out.println(aList.toString());
+                flag = false;
+            }
+        }
+        out.println("0");
+        if (flag) {
+            out.println("No deposits with entered name");
+        }
+    }
+
+    private void showType() throws IOException {
+        String type = in.readLine();
+        list=readFile();
+        boolean flag = true;
+        for (Deposit aList : list) {
+            if (Objects.equals(aList.getType(), type)) {
+                out.println(aList.toString());
+                flag = false;
+            }
+        }
+        out.println("0");
+        if (flag) {
+            out.println("No deposits with entered type");
+        }
+    }
+
+    private void infoDepositor() throws IOException {
+        String depositor = in.readLine();
+        list=readFile();
+        boolean flag = true;
+        for (Deposit aList : list) {
+            if (Objects.equals(aList.getDepositor(), depositor)) {
+                out.println(aList.toString());
+                flag = false;
+            }
+        }
+        out.println("0");
+        if (flag) {
+            out.println("No deposits with entered depositor");
+        }
+    }
+
+    private void delete() throws IOException {
+        String accountId = in.readLine();
+        list=readFile();
+        boolean flag = true;
+        for (int i = 0; i < list.size(); i++) {
+            if (Objects.equals(list.get(i).getAccountID(), accountId)) {
+                list.remove(list.get(i));
+                writeFile(list);
+                out.println("Deleted");
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            out.println("No deposits with entered account id");
+        }
+    }
+
+    private void infoAccount() throws IOException {
+        String accountId = in.readLine();
+        list=readFile();
+        boolean flag = true;
+        for (Deposit aList1 : list) {
+            if (Objects.equals(aList1.getAccountID(), accountId)) {
+                out.println(aList1.toString());
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            out.println("No deposits with entered account id");
+        }
+    }
+
+    private void sum() throws FileNotFoundException {
+        list = readFile();
+        double sum=0;
+        for (Deposit aList : list) {
+            sum += aList.getAmoundOnDeposit();
+        }
+        out.println(sum);
+    }
+
+    private void add() throws IOException {
+        String json = in.readLine();
+        Deposit dep = gson.fromJson(json, Deposit.class);
+        if (dep.getAmoundOnDeposit()<=0 || dep.getProfitability()<=0 || dep.getTimeContraints()<=0) {
+            out.println("Error. Invalid input");
+            return;
+        }
+        List<Deposit> list = readFile();
+        boolean flag=true;
+        for (Deposit aList : list) {
+            if (Objects.equals(aList.getAccountID(), dep.getAccountID())) {
+                out.println("Error. This ID is already in use");
+                flag=false;
+                break;
+            }
+        }
+        if (flag) {
+            list.add(dep);
+            writeFile(list);
+            out.println("OK");
+        }
+    }
+
+    private void list() throws FileNotFoundException {
+        List<Deposit> list = readFile();
+        for (Deposit aList1 : list) {
+            out.println(aList1.toString());
+        }
+        out.println("0");
     }
 
     private void writeFile(List<Deposit> list) throws FileNotFoundException {
